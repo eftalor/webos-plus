@@ -132,5 +132,41 @@
         "name": "Current app"
       }
     }
+  },
+  "services": {
+    "button": {
+      "name": "Press button",
+      "description": "Sends a remote button press (LEFT, RIGHT, UP, DOWN, ENTER, BACK, HOME, MENU, EXIT, INFO, MUTE, RED, GREEN, YELLOW, BLUE, CHANNELUP, CHANNELDOWN, 0-9, ...).",
+      "fields": {
+        "button": {
+          "name": "Button",
+          "description": "Name of the button."
+        }
+      }
+    },
+    "command": {
+      "name": "Send command",
+      "description": "Sends a raw SSAP request to the TV.",
+      "fields": {
+        "command": {
+          "name": "Command",
+          "description": "Endpoint, e.g. system.launcher/open."
+        },
+        "payload": {
+          "name": "Payload",
+          "description": "Optional payload."
+        }
+      }
+    },
+    "select_sound_output": {
+      "name": "Select sound output",
+      "description": "Changes where the TV's sound goes.",
+      "fields": {
+        "sound_output": {
+          "name": "Sound output",
+          "description": "e.g. tv_speaker, external_arc, external_optical, bt_soundbar."
+        }
+      }
+    }
   }
 }

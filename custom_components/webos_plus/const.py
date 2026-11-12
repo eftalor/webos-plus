@@ -51,6 +51,12 @@ ENERGY_SAVING = ["auto", "off", "min", "med", "max"]
 SOUND_MODES = [
     "aiSoundPlus", "aiSound", "standard", "movie", "news", "sports", "music", "game",
 ]
+# Labels for the media player's sound mode list (the popup shows these strings)
+SOUND_MODE_LABELS = {
+    "aiSoundPlus": "AI Sound Pro", "aiSound": "AI Sound", "standard": "Standard",
+    "movie": "Cinema", "news": "Clear voice", "sports": "Sports", "music": "Music",
+    "game": "Game",
+}
 SOUND_OUTPUTS = [
     "tv_speaker", "external_arc", "external_optical", "bt_soundbar", "headphone",
     "lineout", "tv_external_speaker", "tv_speaker_headphone",

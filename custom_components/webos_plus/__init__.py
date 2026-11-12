@@ -4,10 +4,21 @@ from aiowebostv import WebOsClient
 
 from homeassistant.const import CONF_CLIENT_SECRET, CONF_HOST, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import Event, HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
-from .const import PLATFORMS
+from .const import DOMAIN, PLATFORMS
 from .coordinator import WebOsPlusConfigEntry, WebOsPlusCoordinator
+from .services import async_setup_services
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register services once."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: WebOsPlusConfigEntry) -> bool:

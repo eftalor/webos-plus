@@ -6,18 +6,24 @@ from http import HTTPStatus
 from typing import Any, override
 
 from homeassistant.components.media_player import (
+    BrowseMedia,
+    MediaClass,
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
     MediaPlayerState,
     MediaType,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant, ServiceResponse, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import LIVE_TV_APP_ID, LOGGER
+from .const import LIVE_TV_APP_ID, LOGGER, SOUND_MODE_LABELS
+
+TYPE_APP = "app"
+TYPE_INPUT = "input"
+LABEL_TO_SOUND_MODE = {v: k for k, v in SOUND_MODE_LABELS.items()}
 from .coordinator import WebOsPlusConfigEntry
 from .entity import WebOsPlusEntity, cmd
 
@@ -33,6 +39,8 @@ BASE_FEATURES = (
     | MediaPlayerEntityFeature.NEXT_TRACK
     | MediaPlayerEntityFeature.PREVIOUS_TRACK
     | MediaPlayerEntityFeature.PLAY_MEDIA
+    | MediaPlayerEntityFeature.BROWSE_MEDIA
+    | MediaPlayerEntityFeature.SELECT_SOUND_MODE
 )
 VOLUME_FEATURES = (
     MediaPlayerEntityFeature.VOLUME_MUTE
@@ -84,6 +92,7 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
             self._attr_app_name = None
             self._attr_volume_level = None
             self._attr_is_volume_muted = None
+            self._attr_sound_mode = None
             # keep the last source list so the UI still shows choices
             self._attr_source_list = sorted(self._sources) or None
             return
@@ -103,6 +112,9 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
 
         self._attr_volume_level = tv.volume / 100.0 if tv.volume is not None else None
         self._attr_is_volume_muted = tv.muted
+        self._attr_sound_mode_list = list(SOUND_MODE_LABELS.values())
+        mode = coord.settings.get("soundMode")
+        self._attr_sound_mode = SOUND_MODE_LABELS.get(mode, mode) if mode else None
 
         # Sources: apps first, then inputs (with the names set on the TV)
         sources: dict[str, dict[str, Any]] = {}
@@ -226,10 +238,102 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
 
     @cmd
     @override
+    async def async_select_sound_mode(self, sound_mode: str) -> None:
+        mode = LABEL_TO_SOUND_MODE.get(sound_mode, sound_mode)
+        await self.coordinator.async_set_setting("sound", "soundMode", mode)
+
+    # Services (same as the built-in webostv, so cards written for it work)
+
+    @cmd
+    async def async_button(self, button: str) -> None:
+        """Press a remote button."""
+        await self._client.button(button)
+
+    @cmd
+    async def async_command(self, command: str, **kwargs: Any) -> ServiceResponse:
+        """Send a raw SSAP request."""
+        return await self._client.request(command, payload=kwargs.get("payload"))
+
+    @cmd
+    async def async_select_sound_output(self, sound_output: str) -> None:
+        """Change the sound output."""
+        await self._client.change_sound_output(sound_output)
+
+    # Media browser: the TV's apps and inputs with their icons
+
+    @override
+    async def async_browse_media(
+        self, media_content_type: MediaType | str | None = None, media_content_id: str | None = None
+    ) -> BrowseMedia:
+        """Return apps (in launcher order) and inputs as one grid."""
+        if not self.coordinator.is_on:
+            raise HomeAssistantError(f"{self.coordinator.name} is off")
+        tv = self._client.tv_state
+        children: list[BrowseMedia] = []
+        for app in tv.apps.values():
+            children.append(
+                BrowseMedia(
+                    media_class=MediaClass.APP,
+                    media_content_id=app["id"],
+                    media_content_type=TYPE_APP,
+                    title=app["title"],
+                    can_play=True,
+                    can_expand=False,
+                    thumbnail=self.get_browse_image_url(TYPE_APP, app["id"]),
+                )
+            )
+        for inp in tv.inputs.values():
+            children.append(
+                BrowseMedia(
+                    media_class=MediaClass.CHANNEL,
+                    media_content_id=inp["id"],
+                    media_content_type=TYPE_INPUT,
+                    title=inp["label"],
+                    can_play=True,
+                    can_expand=False,
+                    thumbnail=self.get_browse_image_url(TYPE_INPUT, inp["id"])
+                    if str(inp.get("icon", "")).startswith("http")
+                    else None,
+                )
+            )
+        return BrowseMedia(
+            media_class=MediaClass.DIRECTORY,
+            media_content_id="root",
+            media_content_type="apps",
+            title=self.coordinator.name,
+            can_play=False,
+            can_expand=True,
+            children=children,
+            children_media_class=MediaClass.APP,
+        )
+
+    @override
+    async def async_get_browse_image(
+        self, media_content_type: str, media_content_id: str, media_image_id: str | None = None
+    ) -> tuple[bytes | None, str | None]:
+        """Serve app and input icons through HA (the TV's HTTPS is self-signed)."""
+        tv = self._client.tv_state
+        url = None
+        if media_content_type == TYPE_APP and (app := tv.apps.get(media_content_id)):
+            large = app.get("largeIcon") or ""
+            url = large if large.startswith("http") else app.get("icon")
+        elif media_content_type == TYPE_INPUT:
+            for inp in tv.inputs.values():
+                if inp["id"] == media_content_id:
+                    url = inp.get("icon")
+        if not url:
+            return None, None
+        return await self._async_fetch_image(url)
+
+    @cmd
+    @override
     async def async_play_media(self, media_type: MediaType | str, media_id: str, **kwargs: Any) -> None:
-        """Play a channel by name or number, or launch an app by id (media_type 'app')."""
-        if media_type == "app":
+        """Launch an app or input from the browser, or tune a channel by name or number."""
+        if media_type == TYPE_APP:
             await self._client.launch_app(media_id)
+            return
+        if media_type == TYPE_INPUT:
+            await self._client.set_input(media_id)
             return
         if media_type == MediaType.CHANNEL and self._client.tv_state.channels:
             wanted = media_id.lower()
@@ -243,13 +347,14 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
     @override
     async def _async_fetch_image(self, url: str) -> tuple[bytes | None, str | None]:
         """Fetch app icons; the TV uses self-signed certificates."""
-        content = None
+        content, content_type = None, None
         session = async_get_clientsession(self.hass)
-        with suppress(TimeoutError):
+        with suppress(TimeoutError, OSError):
             async with asyncio.timeout(10):
                 response = await session.get(url, ssl=False)
                 if response.status == HTTPStatus.OK:
                     content = await response.read()
+                    content_type = response.headers.get("Content-Type", "image/png")
         if content is None:
             LOGGER.debug("Could not fetch image %s", url)
-        return content, None
+        return content, content_type

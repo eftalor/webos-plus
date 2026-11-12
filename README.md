@@ -4,7 +4,7 @@ A Home Assistant custom integration for LG webOS TVs, built on the same
 [`aiowebostv`](https://github.com/home-assistant-libs/aiowebostv) library as the
 built-in **LG webOS TV** integration, with a few things the built-in one doesn't do.
 
-> Status: early (0.1.0). Tested on one LG 55UP7550 (webOS 6.0, 2021) with Home Assistant 2026.11.
+> Status: early (0.2.0). Tested on one LG 55UP7550 (webOS 6.0, 2021) with Home Assistant 2026.11.
 
 ## What's different
 
@@ -15,6 +15,7 @@ built-in **LG webOS TV** integration, with a few things the built-in one doesn't
 | Noticing the TV turned on | reconnect attempt every 10 s | cheap port check every 5 s, every 1 s after a turn-on request |
 | Picture/sound settings | — | backlight, brightness, contrast, color, energy saving, sound mode, picture mode |
 | Sound output | service call only | select entity |
+| More-info popup | play/pause, volume, source | adds **Browse** (apps and inputs with their icons, tap to launch) and **sound mode** |
 | Power state | on/off | sensor: on, screen off, standby, off |
 | Pairing | 10 s to accept on the TV | 60 s |
 
@@ -27,12 +28,33 @@ state is the last value set from Home Assistant.
 
 ## Entities
 
-- `media_player`: power, volume, apps and inputs (with the names set on the TV), app icon
+- `media_player`: power, volume, apps and inputs (with the names set on the TV), app icon,
+  media browser with app icons, sound mode
 - `select`: picture mode, sound mode, sound output, energy saving
 - `number`: backlight, brightness (contrast and color are disabled by default)
 - `switch`: screen (turn the panel off while sound keeps playing)
 - `button`: show the input picker
 - `sensor`: power state, current app
+
+## Services
+
+Same names and fields as the built-in integration, so remote cards written for it work
+once their actions point at `webos_plus` instead of `webostv`:
+`webos_plus.button` (`button: LEFT`), `webos_plus.command` (`command`, optional `payload`),
+`webos_plus.select_sound_output` (`sound_output`).
+
+For the [LG WebOS Remote Control card](https://github.com/madmicio/LG-WebOS-Remote-Control),
+which calls `webostv.*` directly, override each key, for example:
+
+```yaml
+keys:
+  UP:
+    service: webos_plus.button
+    data: {entity_id: media_player.my_tv, button: UP}
+  PLAY:
+    service: webos_plus.command
+    data: {entity_id: media_player.my_tv, command: media.controls/play}
+```
 
 ## Install
 

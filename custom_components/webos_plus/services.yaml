@@ -1,0 +1,40 @@
+button:
+  target:
+    entity:
+      integration: webos_plus
+      domain: media_player
+  fields:
+    button:
+      required: true
+      example: "LEFT"
+      selector:
+        text:
+
+command:
+  target:
+    entity:
+      integration: webos_plus
+      domain: media_player
+  fields:
+    command:
+      required: true
+      example: "system.launcher/open"
+      selector:
+        text:
+    payload:
+      example: >-
+        target: https://www.google.com
+      selector:
+        object:
+
+select_sound_output:
+  target:
+    entity:
+      integration: webos_plus
+      domain: media_player
+  fields:
+    sound_output:
+      required: true
+      example: "external_arc"
+      selector:
+        text:
