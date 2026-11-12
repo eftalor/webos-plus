@@ -4,7 +4,7 @@ A Home Assistant custom integration for LG webOS TVs, built on the same
 [`aiowebostv`](https://github.com/home-assistant-libs/aiowebostv) library as the
 built-in **LG webOS TV** integration, with a few things the built-in one doesn't do.
 
-> Status: early (0.2.0). Tested on one LG 55UP7550 (webOS 6.0, 2021) with Home Assistant 2026.11.
+> Status: early (0.4.0). Tested on one LG 55UP7550 (webOS 6.0, 2021, rooted with webOS Homebrew for the optional root agent) with Home Assistant 2026.11.
 
 ## What's different
 
