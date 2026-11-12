@@ -3,6 +3,7 @@
 from typing import override
 
 from homeassistant.components.button import ButtonEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -26,6 +27,7 @@ class InputPickerButton(WebOsPlusOnEntity, ButtonEntity):
     """Open the TV's input picker on screen."""
 
     _attr_translation_key = "input_picker"
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, entry: WebOsPlusConfigEntry) -> None:
         """Initialize."""

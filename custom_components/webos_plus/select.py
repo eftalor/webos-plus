@@ -27,7 +27,7 @@ class SettingSelectDescription(SelectEntityDescription):
 SETTING_SELECTS = (
     SettingSelectDescription(
         key="sound_mode", translation_key="sound_mode", options=SOUND_MODES,
-        category="sound", setting="soundMode",
+        category="sound", setting="soundMode", entity_category=EntityCategory.CONFIG,
     ),
     SettingSelectDescription(
         key="energy_saving", translation_key="energy_saving", options=ENERGY_SAVING,
@@ -78,6 +78,7 @@ class SoundOutputSelect(WebOsPlusOnEntity, SelectEntity):
     """Where sound goes: TV speakers, ARC soundbar, optical, Bluetooth, ..."""
 
     _attr_translation_key = "sound_output"
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, entry: WebOsPlusConfigEntry) -> None:
         """Initialize."""
@@ -106,6 +107,7 @@ class PictureModeSelect(WebOsPlusOnEntity, RestoreEntity, SelectEntity):
     """Picture mode. Write-only on the TV without root, so the state is the last one set here."""
 
     _attr_translation_key = "picture_mode"
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_options = PICTURE_MODES
     _attr_assumed_state = True
 

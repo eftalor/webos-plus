@@ -3,6 +3,7 @@
 from typing import Any, override
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -25,6 +26,7 @@ class ScreenSwitch(WebOsPlusOnEntity, SwitchEntity):
     """Turn the screen off while the TV stays on (e.g. for music)."""
 
     _attr_translation_key = "screen"
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, entry: WebOsPlusConfigEntry) -> None:
         """Initialize."""

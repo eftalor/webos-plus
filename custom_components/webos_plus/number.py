@@ -13,7 +13,10 @@ from .entity import WebOsPlusOnEntity, cmd
 PARALLEL_UPDATES = 1
 
 NUMBERS = (
-    NumberEntityDescription(key="backlight", translation_key="backlight", icon="mdi:brightness-6"),
+    NumberEntityDescription(
+        key="backlight", translation_key="backlight", icon="mdi:brightness-6",
+        entity_category=EntityCategory.CONFIG,
+    ),
     NumberEntityDescription(
         key="brightness", translation_key="brightness", entity_category=EntityCategory.CONFIG
     ),
