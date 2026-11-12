@@ -9,7 +9,22 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, WEBOSTV_EXCEPTIONS
-from .coordinator import WebOsPlusConfigEntry, WebOsPlusCoordinator
+from .coordinator import WebOsPlusAgentCoordinator, WebOsPlusConfigEntry, WebOsPlusCoordinator
+
+
+def device_info(entry: WebOsPlusConfigEntry) -> DeviceInfo:
+    """Device info shared by all entities of one TV."""
+    info = DeviceInfo(
+        identifiers={(DOMAIN, cast(str, entry.unique_id))},
+        manufacturer="LG",
+        name=entry.title,
+    )
+    system = entry.runtime_data.client.tv_info.system
+    if model := system.get("modelName"):
+        info["model"] = model
+    if serial := system.get("serialNumber"):
+        info["serial_number"] = serial
+    return info
 
 
 class WebOsPlusEntity(CoordinatorEntity[WebOsPlusCoordinator]):
@@ -24,16 +39,7 @@ class WebOsPlusEntity(CoordinatorEntity[WebOsPlusCoordinator]):
         self._client = entry.runtime_data.client
         uid = cast(str, entry.unique_id)
         self._attr_unique_id = f"{uid}_{key}" if key else uid
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, uid)},
-            manufacturer="LG",
-            name=entry.title,
-        )
-        system = self._client.tv_info.system
-        if model := system.get("modelName"):
-            self._attr_device_info["model"] = model
-        if serial := system.get("serialNumber"):
-            self._attr_device_info["serial_number"] = serial
+        self._attr_device_info = device_info(entry)
 
     @property
     def available(self) -> bool:
@@ -48,6 +54,25 @@ class WebOsPlusOnEntity(WebOsPlusEntity):
     def available(self) -> bool:
         """Available only while the TV is on."""
         return self.coordinator.is_on
+
+
+class WebOsPlusAgentEntity(CoordinatorEntity[WebOsPlusAgentCoordinator]):
+    """An entity fed by the root agent; available while the TV is on and the agent answers."""
+
+    _attr_has_entity_name = True
+
+    def __init__(self, entry: WebOsPlusConfigEntry, key: str) -> None:
+        """Initialize."""
+        agent = entry.runtime_data.agent
+        assert agent is not None
+        super().__init__(agent)
+        self._attr_unique_id = f"{entry.unique_id}_{key}"
+        self._attr_device_info = device_info(entry)
+
+    @property
+    def available(self) -> bool:
+        """Available while there is fresh agent data."""
+        return super().available and bool(self.coordinator.data)
 
 
 def cmd[_EntityT: WebOsPlusEntity, _R, **_P](

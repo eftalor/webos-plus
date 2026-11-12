@@ -13,7 +13,19 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import format_mac
 
+from .agent import (
+    AgentAuthError,
+    AgentError,
+    TvAgent,
+    async_fetch_host_key,
+    generate_key,
+    public_key,
+)
 from .const import (
+    AGENT_PATH,
+    CONF_AGENT,
+    CONF_AGENT_HOST_KEY,
+    CONF_AGENT_KEY,
     CONF_BROADCAST,
     CONF_MACS,
     DEFAULT_BROADCAST,
@@ -143,7 +155,11 @@ class WebOsPlusFlow(ConfigFlow, domain=DOMAIN):
 
 
 class WebOsPlusOptionsFlow(OptionsFlow):
-    """Options: Wake-on-LAN broadcast address and MACs."""
+    """Options: Wake-on-LAN broadcast address and MACs, optional root agent."""
+
+    def __init__(self) -> None:
+        """Initialize."""
+        self._options: dict[str, Any] = {}
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the options."""
@@ -151,6 +167,9 @@ class WebOsPlusOptionsFlow(OptionsFlow):
         if user_input is not None:
             macs = [format_mac(m.strip()) for m in user_input.pop(CONF_MACS, "").split(",") if m.strip()]
             self.hass.config_entries.async_update_entry(entry, data={**entry.data, CONF_MACS: macs})
+            self._options = user_input
+            if user_input.get(CONF_AGENT):
+                return await self.async_step_agent()
             return self.async_create_entry(title="", data=user_input)
         schema = vol.Schema(
             {
@@ -161,6 +180,49 @@ class WebOsPlusOptionsFlow(OptionsFlow):
                 vol.Optional(
                     CONF_MACS, default=", ".join(entry.data.get(CONF_MACS, []))
                 ): cv.string,
+                vol.Optional(CONF_AGENT, default=entry.options.get(CONF_AGENT, False)): cv.boolean,
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
+
+    async def async_step_agent(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Show the key to install on the TV, then test the connection."""
+        entry = self.config_entry
+        host = entry.data[CONF_HOST]
+        if not entry.data.get(CONF_AGENT_KEY):
+            key = await self.hass.async_add_executor_job(generate_key)
+            self.hass.config_entries.async_update_entry(
+                entry, data={**entry.data, CONF_AGENT_KEY: key}
+            )
+        private = entry.data[CONF_AGENT_KEY]
+
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                # trust on first use: pin whatever host key the TV has now
+                host_key = entry.data.get(CONF_AGENT_HOST_KEY) or await async_fetch_host_key(host)
+                agent = await self.hass.async_add_executor_job(TvAgent, host, private, host_key)
+                try:
+                    await agent.async_run("version")
+                finally:
+                    await agent.async_close()
+            except AgentAuthError:
+                errors["base"] = "agent_auth"
+            except AgentError:
+                errors["base"] = "agent_failed"
+            else:
+                self.hass.config_entries.async_update_entry(
+                    entry, data={**entry.data, CONF_AGENT_HOST_KEY: host_key}
+                )
+                return self.async_create_entry(title="", data=self._options)
+
+        pub = await self.hass.async_add_executor_job(public_key, private)
+        line = (
+            f'command="{AGENT_PATH}",no-port-forwarding,no-agent-forwarding,'
+            f"no-X11-forwarding,no-pty {pub}"
+        )
+        return self.async_show_form(
+            step_id="agent",
+            errors=errors,
+            description_placeholders={"host": host, "agent_path": AGENT_PATH, "key_line": line},
+        )

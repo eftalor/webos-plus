@@ -24,7 +24,8 @@ invisible notification) and are kept in sync by subscriptions, so changes made
 with the physical remote show up immediately.
 
 **Picture mode** can be set but not read back without root on webOS 6, so its
-state is the last value set from Home Assistant.
+state is the last value set from Home Assistant, unless the optional root agent
+is enabled (see below).
 
 ## Entities
 
@@ -35,6 +36,10 @@ state is the last value set from Home Assistant.
 - `switch`: screen (turn the panel off while sound keeps playing)
 - `button`: show the input picker
 - `sensor`: power state, current app
+
+With the root agent: `sensor` free memory (attribute: top 5 processes), memory used,
+swap used, CPU, Netflix memory, last boot, load (disabled by default); `button` free
+memory; and the picture mode select shows the TV's real value.
 
 ## Services
 
@@ -69,11 +74,25 @@ and give the TV a fixed IP address.
 
 It can run next to the built-in integration (the TV accepts several paired apps).
 
+## Root agent (optional, rooted TVs only)
+
+On a TV rooted with [webOS Homebrew](https://www.webosbrew.org/) the integration can read
+what SSAP won't tell it. It runs `tv/agent.sh` over SSH as the *forced command* of a key that
+Home Assistant generates, so that key can only run the agent's fixed commands
+(`version`, `stats`, `free-memory`) and never gets a shell. `stats` is polled every 30 s
+while the TV is on and takes about a second on the TV.
+
+1. Copy `tv/agent.sh` to `/var/lib/webos-plus/agent` on the TV and `chmod 755` it.
+2. In Home Assistant: the integration's **Configure** → tick **Root agent** → Submit.
+   The next step shows a line beginning with `command="/var/lib/webos-plus/agent",...`.
+3. Append that line to `/home/root/.ssh/authorized_keys` on the TV, then press Submit.
+   The TV's SSH host key is pinned on the first successful test.
+
+**Free memory** closes apps left running in the background. It never closes the app on
+screen, Home, inputs, Live TV, AirPlay or the screensaver.
+
 ## Roadmap
 
-- Optional root features over SSH for rooted TVs (webOS Homebrew): memory, swap and CPU
-  sensors, reading the real picture mode, freeing memory. Uses a restricted key and a
-  helper script with a fixed command list.
 - Notifications (toasts) and more settings.
 
 ## License

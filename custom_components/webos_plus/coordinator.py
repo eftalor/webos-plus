@@ -21,9 +21,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_CLIENT_SECRET, CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .agent import AgentError, TvAgent
 from .const import (
+    AGENT_POLL,
     CONF_BROADCAST,
     CONF_MACS,
     DEFAULT_BROADCAST,
@@ -94,6 +96,8 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         # Last picture mode set through HA (the TV won't report it without root)
         self.picture_mode: str | None = None
         self._fast_until = 0.0
+        # Set up later when the root agent is enabled
+        self.agent: WebOsPlusAgentCoordinator | None = None
         self._was_on = False
 
     @property
@@ -163,6 +167,9 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         if on != self._was_on:
             LOGGER.debug("%s: power %s", self.host, "on" if on else "off")
             self._was_on = on
+            if self.agent:
+                # read stats right away instead of waiting for the next poll
+                self.hass.async_create_task(self.agent.async_request_refresh())
         self.async_set_updated_data(None)
 
     @callback
@@ -197,3 +204,41 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         await async_luna_request(
             self.client, LUNA_SET_SYSTEM_SETTINGS, {"category": category, "settings": {key: value}}
         )
+
+
+class WebOsPlusAgentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Poll the root agent for memory, CPU and picture mode while the TV is on."""
+
+    config_entry: WebOsPlusConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: WebOsPlusConfigEntry,
+        main: WebOsPlusCoordinator,
+        agent: TvAgent,
+    ) -> None:
+        """Initialize."""
+        super().__init__(
+            hass,
+            LOGGER,
+            config_entry=entry,
+            name=f"{entry.title} agent",
+            update_interval=timedelta(seconds=AGENT_POLL),
+        )
+        self.main = main
+        self.agent = agent
+
+    @override
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Return the agent's stats, or {} while the TV is off."""
+        if not self.main.is_on:
+            return {}
+        try:
+            return await self.agent.async_run("stats")
+        except AgentError as err:
+            raise UpdateFailed(str(err)) from err
+
+    async def async_run(self, command: str) -> dict[str, Any]:
+        """Run another agent command (free-memory, ...)."""
+        return await self.agent.async_run(command)

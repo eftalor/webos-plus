@@ -30,15 +30,25 @@
   "options": {
     "step": {
       "init": {
-        "title": "Wake-on-LAN",
+        "title": "Options",
         "data": {
           "broadcast_address": "Broadcast address",
-          "macs": "MAC addresses (comma separated)"
+          "macs": "MAC addresses (comma separated)",
+          "root_agent": "Root agent (rooted TVs only)"
         },
         "data_description": {
-          "macs": "Filled in automatically when pairing (wired and Wi-Fi)."
+          "macs": "Filled in automatically when pairing (wired and Wi-Fi).",
+          "root_agent": "Adds memory, CPU and swap sensors, the real picture mode and a Free memory button. Needs SSH root access to the TV."
         }
+      },
+      "agent": {
+        "title": "Install the root agent",
+        "description": "On the TV at {host}, as root:\n\n1. Copy `tv/agent.sh` from the repository to `{agent_path}` and make it executable (`chmod 755`).\n2. Add this line to `/home/root/.ssh/authorized_keys`:\n\n```\n{key_line}\n```\n\nThe key can only run the agent (no shell). Then press Submit to test the connection; the TV's SSH host key is remembered on the first success."
       }
+    },
+    "error": {
+      "agent_auth": "The TV refused the key. Is the line in authorized_keys?",
+      "agent_failed": "Could not reach the agent. Is the TV on, SSH enabled and the agent installed?"
     }
   },
   "entity": {
@@ -116,6 +126,9 @@
     "button": {
       "input_picker": {
         "name": "Show inputs"
+      },
+      "free_memory": {
+        "name": "Free memory"
       }
     },
     "sensor": {
@@ -130,6 +143,27 @@
       },
       "current_app": {
         "name": "Current app"
+      },
+      "memory_free": {
+        "name": "Free memory"
+      },
+      "memory_used": {
+        "name": "Memory used"
+      },
+      "swap_used": {
+        "name": "Swap used"
+      },
+      "cpu": {
+        "name": "CPU"
+      },
+      "load": {
+        "name": "Load"
+      },
+      "netflix_memory": {
+        "name": "Netflix memory"
+      },
+      "last_boot": {
+        "name": "Last boot"
       }
     }
   },

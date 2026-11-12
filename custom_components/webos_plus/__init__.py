@@ -8,8 +8,9 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, PLATFORMS
-from .coordinator import WebOsPlusConfigEntry, WebOsPlusCoordinator
+from .agent import TvAgent
+from .const import CONF_AGENT, CONF_AGENT_HOST_KEY, CONF_AGENT_KEY, DOMAIN, PLATFORMS
+from .coordinator import WebOsPlusAgentCoordinator, WebOsPlusConfigEntry, WebOsPlusCoordinator
 from .services import async_setup_services
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -31,6 +32,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: WebOsPlusConfigEntry) ->
     entry.runtime_data = coordinator = WebOsPlusCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
     await client.register_state_update_callback(coordinator.async_handle_update)
+
+    data = entry.data
+    if entry.options.get(CONF_AGENT) and data.get(CONF_AGENT_KEY) and data.get(CONF_AGENT_HOST_KEY):
+        agent = await hass.async_add_executor_job(
+            TvAgent, data[CONF_HOST], data[CONF_AGENT_KEY], data[CONF_AGENT_HOST_KEY]
+        )
+        coordinator.agent = WebOsPlusAgentCoordinator(hass, entry, coordinator, agent)
+        # not first_refresh: a failing agent must not stop the TV from loading
+        await coordinator.agent.async_refresh()
+        entry.async_on_unload(agent.async_close)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

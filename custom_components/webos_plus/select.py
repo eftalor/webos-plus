@@ -104,31 +104,55 @@ class SoundOutputSelect(WebOsPlusOnEntity, SelectEntity):
 
 
 class PictureModeSelect(WebOsPlusOnEntity, RestoreEntity, SelectEntity):
-    """Picture mode. Write-only on the TV without root, so the state is the last one set here."""
+    """Picture mode.
+
+    Without root the TV won't report it, so the state is the last one set here.
+    With the root agent the real value is read every poll (and after a change).
+    """
 
     _attr_translation_key = "picture_mode"
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = PICTURE_MODES
-    _attr_assumed_state = True
 
     def __init__(self, entry: WebOsPlusConfigEntry) -> None:
         """Initialize."""
         super().__init__(entry, "picture_mode")
+        self._agent = entry.runtime_data.agent
+        self._attr_assumed_state = self._agent is None
 
     @override
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
+        if self._agent:
+            self.async_on_remove(self._agent.async_add_listener(self._handle_coordinator_update))
         if (last := await self.async_get_last_state()) and last.state in PICTURE_MODES:
             self.coordinator.picture_mode = last.state
+
+    def _agent_mode(self) -> str | None:
+        if self._agent and self._agent.data:
+            return self._agent.data.get("picture_mode") or None
+        return None
+
+    @property
+    @override
+    def options(self) -> list[str]:
+        # HDR content uses its own modes (hdrStandard, dolbyHdrCinema, ...)
+        current = self.current_option
+        if current and current not in PICTURE_MODES:
+            return [*PICTURE_MODES, current]
+        return PICTURE_MODES
 
     @property
     @override
     def current_option(self) -> str | None:
-        return self.coordinator.picture_mode
+        return self._agent_mode() or self.coordinator.picture_mode
 
     @cmd
     @override
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_set_setting("picture", "pictureMode", option)
         self.coordinator.picture_mode = option
+        if self._agent and self._agent.data:
+            self._agent.data["picture_mode"] = option  # until the next read confirms it
         self.async_write_ha_state()
+        if self._agent:
+            await self._agent.async_request_refresh()
