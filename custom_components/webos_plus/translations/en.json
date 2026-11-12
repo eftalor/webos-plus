@@ -1,0 +1,136 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "LG webOS TV Plus",
+        "description": "Enter the TV's IP address. A fixed address (DHCP reservation) is recommended.",
+        "data": {
+          "host": "Host",
+          "name": "Name"
+        }
+      },
+      "pairing": {
+        "title": "Pair with the TV",
+        "description": "Make sure the TV at {host} is on. Press Submit, then accept the request on the TV with the remote within {timeout} seconds."
+      },
+      "reauth_confirm": {
+        "title": "Pair again",
+        "description": "The TV no longer accepts Home Assistant's key. Make sure the TV at {host} is on. Press Submit, then accept the request on the TV with the remote within {timeout} seconds."
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Is the TV on and is \"LG Connect Apps\" enabled?",
+      "error_pairing": "Pairing was rejected or not accepted in time."
+    },
+    "abort": {
+      "already_configured": "This TV is already configured.",
+      "reauth_successful": "Paired again."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Wake-on-LAN",
+        "data": {
+          "broadcast_address": "Broadcast address",
+          "macs": "MAC addresses (comma separated)"
+        },
+        "data_description": {
+          "macs": "Filled in automatically when pairing (wired and Wi-Fi)."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "picture_mode": {
+        "name": "Picture mode",
+        "state": {
+          "vivid": "Vivid",
+          "normal": "Standard",
+          "eco": "Eco",
+          "cinema": "Cinema",
+          "sports": "Sports",
+          "game": "Game optimizer",
+          "filmMaker": "Filmmaker",
+          "expert1": "Expert (bright room)",
+          "expert2": "Expert (dark room)"
+        }
+      },
+      "energy_saving": {
+        "name": "Energy saving",
+        "state": {
+          "auto": "Auto",
+          "off": "Off",
+          "min": "Minimum",
+          "med": "Medium",
+          "max": "Maximum"
+        }
+      },
+      "sound_mode": {
+        "name": "Sound mode",
+        "state": {
+          "aiSoundPlus": "AI Sound Pro",
+          "aiSound": "AI Sound",
+          "standard": "Standard",
+          "movie": "Cinema",
+          "news": "Clear voice",
+          "sports": "Sports",
+          "music": "Music",
+          "game": "Game"
+        }
+      },
+      "sound_output": {
+        "name": "Sound output",
+        "state": {
+          "tv_speaker": "TV speakers",
+          "external_arc": "HDMI ARC",
+          "external_optical": "Optical",
+          "bt_soundbar": "Bluetooth",
+          "headphone": "Wired headphones",
+          "lineout": "Line out",
+          "tv_external_speaker": "TV + external speaker",
+          "tv_speaker_headphone": "TV + headphones"
+        }
+      }
+    },
+    "number": {
+      "backlight": {
+        "name": "Backlight"
+      },
+      "brightness": {
+        "name": "Brightness"
+      },
+      "contrast": {
+        "name": "Contrast"
+      },
+      "color": {
+        "name": "Color"
+      }
+    },
+    "switch": {
+      "screen": {
+        "name": "Screen"
+      }
+    },
+    "button": {
+      "input_picker": {
+        "name": "Show inputs"
+      }
+    },
+    "sensor": {
+      "power_state": {
+        "name": "Power state",
+        "state": {
+          "on": "On",
+          "screen_off": "Screen off",
+          "standby": "Standby",
+          "off": "Off"
+        }
+      },
+      "current_app": {
+        "name": "Current app"
+      }
+    }
+  }
+}
