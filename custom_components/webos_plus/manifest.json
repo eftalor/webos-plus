@@ -5,7 +5,10 @@
     "@eftalor"
   ],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": [
+    "frontend",
+    "http"
+  ],
   "documentation": "https://github.com/eftalor/webos-plus",
   "integration_type": "device",
   "iot_class": "local_push",
@@ -18,5 +21,5 @@
     "wakeonlan>=3.1.0",
     "asyncssh>=2.14.0"
   ],
-  "version": "0.3.1"
+  "version": "0.4.0"
 }

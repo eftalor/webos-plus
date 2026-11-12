@@ -41,6 +41,36 @@ With the root agent: `sensor` free memory (attribute: top 5 processes), memory u
 swap used, CPU, Netflix memory, last boot, load (disabled by default); `button` free
 memory; and the picture mode select shows the TV's real value.
 
+## Dashboard (built in)
+
+The integration ships a ready-made dashboard: a remote control, the TV's picture and sound
+settings, and (with the root agent) a TV health section with memory, CPU and a Free memory
+button. Nothing else to install.
+
+**Settings → Dashboards → Add dashboard → LG webOS TV Plus.** It finds every TV of this
+integration by itself (one tab per TV) and updates when entities are added. Optional
+settings, in the dashboard's raw configuration editor:
+
+```yaml
+strategy:
+  type: custom:webos-plus
+  entity: media_player.my_tv         # only this TV
+  color_buttons: true                # show the RED/GREEN/YELLOW/BLUE buttons
+  sources:                           # app buttons on the remote (exact app names on the TV)
+    - {name: Netflix, icon: mdi:netflix}
+    - {name: Prime Video, icon: amazon}
+    - {name: Disney+, icon: disney}
+    - {name: HBO Max, icon: mdi:movie-open-play}
+```
+
+Without `sources`, up to four of Netflix, YouTube, Prime Video, Disney+, HBO Max, Apple TV
+and Spotify are shown, if installed on the TV. Built-in logos exist for `amazon`, `disney`,
+`dazn` and `nowtv`; anything else uses an `mdi:` icon.
+
+The remote is the [LG WebOS Remote Control card](https://github.com/madmicio/LG-WebOS-Remote-Control)
+by madmicio, bundled unmodified (MIT license, see [Credits](#credits)). If you already
+installed that card through HACS, your copy is used instead.
+
 ## Services
 
 Same names and fields as the built-in integration, so remote cards written for it work
@@ -48,8 +78,9 @@ once their actions point at `webos_plus` instead of `webostv`:
 `webos_plus.button` (`button: LEFT`), `webos_plus.command` (`command`, optional `payload`),
 `webos_plus.select_sound_output` (`sound_output`).
 
-For the [LG WebOS Remote Control card](https://github.com/madmicio/LG-WebOS-Remote-Control),
-which calls `webostv.*` directly, override each key, for example:
+The built-in dashboard does this for you. To use the
+[LG WebOS Remote Control card](https://github.com/madmicio/LG-WebOS-Remote-Control) on a
+dashboard of your own (it calls `webostv.*` directly), override each key, for example:
 
 ```yaml
 keys:
@@ -94,6 +125,15 @@ screen, Home, inputs, Live TV, AirPlay or the screensaver.
 ## Roadmap
 
 - Notifications (toasts) and more settings.
+
+## Credits
+
+- **Remote control card:** [LG WebOS Remote Control](https://github.com/madmicio/LG-WebOS-Remote-Control)
+  by Maurizio "madmicio" and contributors, MIT license. Version 2.1.0 is included unmodified
+  as `custom_components/webos_plus/frontend/lg-remote-control.js`, together with its license
+  (`frontend/LICENSE-lg-remote-control.txt`). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- **TV library:** [aiowebostv](https://github.com/home-assistant-libs/aiowebostv), as used by
+  Home Assistant's own LG webOS TV integration.
 
 ## License
 

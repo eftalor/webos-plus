@@ -1,12 +1,17 @@
 """LG webOS TV Plus: a friendlier LG webOS TV integration."""
 
+from pathlib import Path
+
 from aiowebostv import WebOsClient
 
 from homeassistant.const import CONF_CLIENT_SECRET, CONF_HOST, EVENT_HOMEASSISTANT_STOP
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
 from .agent import TvAgent
 from .const import CONF_AGENT, CONF_AGENT_HOST_KEY, CONF_AGENT_KEY, DOMAIN, PLATFORMS
@@ -15,10 +20,18 @@ from .services import async_setup_services
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
+STATIC_URL = f"/{DOMAIN}_static"
+
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register services once."""
+    """Register services and the dashboard (strategy + bundled remote card) once."""
     async_setup_services(hass)
+    if hass.http is not None:
+        version = (await async_get_integration(hass, DOMAIN)).version
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), True)]
+        )
+        add_extra_js_url(hass, f"{STATIC_URL}/webos-plus-dashboard.js?v={version}")
     return True
 
 
