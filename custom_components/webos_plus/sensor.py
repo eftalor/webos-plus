@@ -63,7 +63,12 @@ def _last_boot(d: dict[str, Any]) -> datetime | None:
 
 
 def _top(d: dict[str, Any]) -> dict[str, Any]:
-    return {"top_processes": {name: _mib(kb) for name, kb in d.get("top", [])}}
+    # several processes can share a name (WebAppMgr runs one per web app): add them up
+    totals: dict[str, int] = {}
+    for name, kb in d.get("top", []):
+        totals[name] = totals.get(name, 0) + kb
+    ranked = sorted(totals.items(), key=lambda item: item[1], reverse=True)
+    return {"top_processes": {name: _mib(kb) for name, kb in ranked}}
 
 
 @dataclass(frozen=True, kw_only=True)
