@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.1 - 2026-11-13
+
+- Menu language writes `localeInfo` (the on-screen language). The old `menuLanguage` key is rejected by the TV.
+
+## 0.5.0 - 2026-11-13
+
+- On-screen messages: a notify entity and `webos_plus.send_message` on the media player.
+- Eye comfort, sleep timer, dynamic contrast, TruMotion, gamma, HDR tone mapping,
+  aspect ratio and menu language. The TV often will not report these, so the
+  entity keeps the last value set from Home Assistant.
+- Contrast and color are enabled. Sharpness (0–50) and color temperature (−50–50).
+- HDR picture modes get names when the TV is showing one. Live TV uses the
+  program title when the TV sends it.
+
 ## 0.4.0 - 2026-11-12
 
 - Built-in dashboard: Settings → Dashboards → Add dashboard → **LG webOS TV Plus** builds a

@@ -13,6 +13,7 @@ LOGGER = logging.getLogger(__package__)
 PLATFORMS = [
     Platform.BUTTON,
     Platform.MEDIA_PLAYER,
+    Platform.NOTIFY,
     Platform.NUMBER,
     Platform.SELECT,
     Platform.SENSOR,
@@ -41,6 +42,7 @@ LIVE_TV_APP_ID = "com.webos.app.livetv"
 LUNA_SET_SYSTEM_SETTINGS = "luna://com.webos.settingsservice/setSystemSettings"
 LUNA_SHOW_INPUT_PICKER = "luna://com.webos.surfacemanager/showInputPicker"
 GET_SYSTEM_SETTINGS = "settings/getSystemSettings"
+CREATE_TOAST = "system.notifications/createToast"
 
 # Settings that SSAP lets us read and subscribe to (verified on webOS 6.0).
 # pictureMode is NOT readable this way; it is write-only without root.
@@ -49,11 +51,41 @@ SUBSCRIBED_SETTINGS: dict[str, list[str]] = {
     "sound": ["soundMode"],
 }
 
+# Tried one key at a time. On webOS 6 the TV often refuses the read; the
+# control still writes through the luna alert and keeps the last value set.
+OPTIONAL_SETTINGS: tuple[tuple[str, str], ...] = (
+    ("picture", "eyeComfortMode"),
+    ("picture", "dynamicContrast"),
+    ("picture", "truMotionMode"),
+    ("picture", "gamma"),
+    ("picture", "hdrDynamicToneMapping"),
+    ("picture", "sharpness"),
+    ("picture", "colorTemperature"),
+    ("time", "sleepTimer"),
+    ("", "localeInfo"),
+    ("aspectRatio", "arcPerApp"),
+)
+
 # Values from getSystemSettingDesc on a 2021 UP75 (webOS 6.0), visible ones only.
 PICTURE_MODES = [
     "vivid", "normal", "eco", "cinema", "sports", "game", "filmMaker", "expert1", "expert2",
 ]
 ENERGY_SAVING = ["auto", "off", "min", "med", "max"]
+EYE_COMFORT = ["off", "on"]
+SLEEP_TIMER = ["off", "10", "20", "30", "60", "90", "120", "180", "240"]
+DYNAMIC_CONTRAST = ["off", "low", "medium", "high"]
+TRUMOTION = ["off", "cinemaClear", "natural", "smooth", "user", "clear"]
+GAMMA = ["low", "medium", "high1", "high2", "mediumHavingLevel"]
+HDR_TONE_MAPPING = ["on", "off", "HGIG"]
+ASPECT_RATIOS = [
+    "16x9", "21x9", "4x3", "original", "just_scan", "zoom", "zoom2", "cinema_zoom", "caption_zoom",
+]
+# Menu language is localeInfo.locales.UI / TV, not the internal menuLanguage key.
+# Tags seen on webOS 23: he-IL, en-GB.
+MENU_LANGUAGES = [
+    "he-IL", "en-GB", "ar-SA", "ru-RU", "fr-FR", "de-DE", "es-ES", "it-IT",
+    "pt-PT", "tr-TR", "uk-UA", "pl-PL",
+]
 SOUND_MODES = [
     "aiSoundPlus", "aiSound", "standard", "movie", "news", "sports", "music", "game",
 ]

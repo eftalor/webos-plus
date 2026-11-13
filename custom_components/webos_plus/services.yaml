@@ -38,3 +38,19 @@ select_sound_output:
       example: "external_arc"
       selector:
         text:
+
+send_message:
+  target:
+    entity:
+      integration: webos_plus
+      domain: media_player
+  fields:
+    message:
+      required: true
+      example: "Dinner is ready"
+      selector:
+        text:
+    title:
+      example: "Home"
+      selector:
+        text:

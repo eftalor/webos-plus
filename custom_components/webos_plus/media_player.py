@@ -24,6 +24,32 @@ from .const import LIVE_TV_APP_ID, LOGGER, SOUND_MODE_LABELS
 TYPE_APP = "app"
 TYPE_INPUT = "input"
 LABEL_TO_SOUND_MODE = {v: k for k, v in SOUND_MODE_LABELS.items()}
+
+
+def _program_name(info: Any) -> str | None:
+    """Return a program title from a Live TV channel-info payload."""
+    if not isinstance(info, dict):
+        return None
+    if name := _named(info):
+        return name
+    programs = info.get("programList")
+    if programs is None:
+        programs = info.get("programInfo")
+    if isinstance(programs, dict):
+        return _named(programs)
+    if isinstance(programs, list):
+        for item in programs:
+            if isinstance(item, dict) and (name := _named(item)):
+                return name
+    return None
+
+
+def _named(item: dict[str, Any]) -> str | None:
+    for key in ("programName", "title"):
+        value = item.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
 from .coordinator import WebOsPlusConfigEntry
 from .entity import WebOsPlusEntity, cmd
 
@@ -87,6 +113,7 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
             self._attr_supported_features = BASE_FEATURES | VOLUME_FEATURES
             self._attr_media_image_url = None
             self._attr_media_title = None
+            self._attr_media_channel = None
             self._attr_source = None
             self._attr_app_id = None
             self._attr_app_name = None
@@ -135,11 +162,14 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
         self._attr_app_name = current
 
         self._attr_media_content_type = None
+        self._attr_media_channel = None
         self._attr_media_title = current
         if tv.current_app_id == LIVE_TV_APP_ID:
             self._attr_media_content_type = MediaType.CHANNEL
-            if tv.current_channel:
-                self._attr_media_title = tv.current_channel.get("channelName")
+            channel_name = (tv.current_channel or {}).get("channelName")
+            program = _program_name(tv.channel_info)
+            self._attr_media_channel = channel_name
+            self._attr_media_title = program or channel_name
 
         self._attr_media_image_url = None
         if app := tv.apps.get(tv.current_app_id or ""):
@@ -258,6 +288,11 @@ class WebOsPlusMediaPlayer(WebOsPlusEntity, MediaPlayerEntity):
     async def async_select_sound_output(self, sound_output: str) -> None:
         """Change the sound output."""
         await self._client.change_sound_output(sound_output)
+
+    @cmd
+    async def async_send_message(self, message: str, title: str | None = None) -> None:
+        """Show a short message on the TV screen."""
+        await self.coordinator.async_show_toast(message, title)
 
     # Media browser: the TV's apps and inputs with their icons
 

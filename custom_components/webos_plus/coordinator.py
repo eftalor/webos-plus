@@ -10,6 +10,7 @@ Differences from the built-in webostv coordinator:
 
 import asyncio
 from contextlib import suppress
+from copy import deepcopy
 from datetime import timedelta
 import time
 from typing import Any, override
@@ -20,7 +21,7 @@ from wakeonlan import send_magic_packet
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_CLIENT_SECRET, CONF_HOST
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .agent import AgentError, TvAgent
@@ -30,9 +31,11 @@ from .const import (
     CONF_MACS,
     DEFAULT_BROADCAST,
     FAST_WINDOW,
+    CREATE_TOAST,
     GET_SYSTEM_SETTINGS,
     LOGGER,
     LUNA_SET_SYSTEM_SETTINGS,
+    OPTIONAL_SETTINGS,
     POLL_FAST,
     POLL_OFF,
     SUBSCRIBED_SETTINGS,
@@ -93,6 +96,9 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         self.host: str = entry.data[CONF_HOST]
         # Settings pushed by the TV: {"backlight": "100", "soundMode": "standard", ...}
         self.settings: dict[str, Any] = {}
+        # Keys the TV actually reported. Anything else is the last value set here.
+        self.live_settings: set[str] = set()
+        self._optional_task: asyncio.Task[None] | None = None
         # Last picture mode set through HA (the TV won't report it without root)
         self.picture_mode: str | None = None
         self._fast_until = 0.0
@@ -140,6 +146,7 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
 
         self._update_client_key()
         await self._async_subscribe_settings()
+        self._schedule_optional_settings()
 
     async def _async_subscribe_settings(self) -> None:
         """Subscribe to settings; the library drops subscriptions on reconnect."""
@@ -148,6 +155,7 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
             async def _on_settings(payload: dict[str, Any]) -> None:
                 if settings := payload.get("settings"):
                     self.settings.update(settings)
+                    self.live_settings.update(settings)
                     self.async_set_updated_data(None)
 
             try:
@@ -159,11 +167,45 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
             except Exception as err:  # noqa: BLE001 - response type errors on other models
                 LOGGER.warning("%s: settings %s not available: %s", self.host, category, err)
 
+    def _schedule_optional_settings(self) -> None:
+        """Subscribe to extra settings without delaying the rest of the connection."""
+        if self._optional_task is not None and not self._optional_task.done():
+            self._optional_task.cancel()
+        self._optional_task = self.hass.async_create_task(self._async_subscribe_optional_settings())
+
+    async def _async_subscribe_optional_settings(self) -> None:
+        """Subscribe one key at a time. The client keeps a single slot per endpoint."""
+        for category, key in OPTIONAL_SETTINGS:
+            await self._async_subscribe_one(category, key)
+
+    async def _async_subscribe_one(self, category: str, key: str) -> None:
+        """Subscribe to a single setting the TV may refuse to read."""
+
+        async def _on_one(payload: dict[str, Any], setting_key: str = key) -> None:
+            if settings := payload.get("settings"):
+                if setting_key in settings:
+                    self.settings[setting_key] = settings[setting_key]
+                    self.live_settings.add(setting_key)
+                    self.async_set_updated_data(None)
+
+        payload: dict[str, Any] = {"keys": [key]}
+        if category:
+            payload["category"] = category
+        try:
+            await self.client.subscribe(_on_one, GET_SYSTEM_SETTINGS, payload)
+        except asyncio.CancelledError:
+            raise
+        except WEBOSTV_EXCEPTIONS as err:
+            LOGGER.debug("%s: %s/%s not readable: %r", self.host, category, key, err)
+        except Exception as err:  # noqa: BLE001 - some models reject the key entirely
+            LOGGER.debug("%s: %s/%s not readable: %s", self.host, category, key, err)
+
     async def async_handle_update(self, tv_state: WebOsTvState) -> None:
         """Handle a state push from the library (also called on disconnect)."""
         on = self.is_on
         if not self.client.is_connected():
             self.settings.clear()
+            self.live_settings.clear()
         if on != self._was_on:
             LOGGER.debug("%s: power %s", self.host, "on" if on else "off")
             self._was_on = on
@@ -204,6 +246,36 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         await async_luna_request(
             self.client, LUNA_SET_SYSTEM_SETTINGS, {"category": category, "settings": {key: value}}
         )
+
+    async def async_set_menu_language(self, tag: str) -> None:
+        """Set the on-screen menu language. Audio language is left as it is."""
+        info = self.settings.get("localeInfo")
+        if not isinstance(info, dict) or not isinstance(info.get("locales"), dict):
+            payload = await self.client.request(GET_SYSTEM_SETTINGS, {"keys": ["localeInfo"]})
+            info = (payload.get("settings") or {}).get("localeInfo")
+        if not isinstance(info, dict) or not isinstance(info.get("locales"), dict):
+            raise HomeAssistantError(f"{self.name}: the TV did not report its language")
+        updated = deepcopy(info)
+        locales = dict(updated["locales"])
+        for key in ("UI", "TV", "FMT", "NLP", "STT"):
+            locales[key] = tag
+        updated["locales"] = locales
+        await async_luna_request(
+            self.client, LUNA_SET_SYSTEM_SETTINGS, {"settings": {"localeInfo": updated}}
+        )
+        self.settings["localeInfo"] = updated
+        self.live_settings.add("localeInfo")
+        self.async_set_updated_data(None)
+
+    async def async_show_toast(self, message: str, title: str | None = None) -> None:
+        """Show a short message on the TV. The TV does not keep it."""
+        parts = [part.strip() for part in (title, message) if part and part.strip()]
+        text = " ".join(": ".join(parts).split())
+        if not text:
+            raise HomeAssistantError("The message is empty")
+        if len(text) > 250:
+            text = text[:249] + "…"
+        await self.client.request(CREATE_TOAST, {"message": text})
 
 
 class WebOsPlusAgentCoordinator(DataUpdateCoordinator[dict[str, Any]]):

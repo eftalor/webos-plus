@@ -27,6 +27,12 @@ SERVICES = (
         "async_select_sound_output",
         SupportsResponse.NONE,
     ),
+    (
+        "send_message",
+        {vol.Required("message"): cv.string, vol.Optional("title"): cv.string},
+        "async_send_message",
+        SupportsResponse.NONE,
+    ),
 )
 
 

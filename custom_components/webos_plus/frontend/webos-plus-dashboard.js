@@ -83,6 +83,12 @@ function tvView(hass, config, player, entities) {
   const full = { grid_options: { columns: 12 } };
   const half = { grid_options: { columns: 6 } };
   const select = { features: [{ type: "select-options" }], features_position: "bottom" };
+  const slider = (key, name) =>
+    tile(find("number", key), {
+      name, ...full,
+      features: [{ type: "numeric-input", style: "slider" }], features_position: "bottom",
+    });
+  const choice = (key, name) => tile(find("select", key), { name, ...full, ...select });
 
   const power = find("sensor", "power_state");
   const sections = [
@@ -109,13 +115,24 @@ function tvView(hass, config, player, entities) {
       type: "grid",
       cards: [
         { type: "heading", heading: "Picture & sound", heading_style: "subtitle" },
-        ...tile(find("select", "picture_mode"), { name: "Picture", ...full, ...select }),
-        ...tile(find("number", "backlight"), {
-          name: "Backlight", ...full,
-          features: [{ type: "numeric-input", style: "slider" }], features_position: "bottom",
-        }),
-        ...tile(find("select", "sound_output"), { name: "Sound output", ...full, ...select }),
-        ...tile(find("select", "sound_mode"), { name: "Sound mode", ...full, ...select }),
+        ...choice("picture_mode", "Picture"),
+        ...slider("backlight", "Backlight"),
+        ...slider("brightness", "Brightness"),
+        ...slider("contrast", "Contrast"),
+        ...slider("color", "Color"),
+        ...slider("sharpness", "Sharpness"),
+        ...slider("color_temperature", "Color temperature"),
+        ...choice("dynamic_contrast", "Dynamic contrast"),
+        ...choice("trumotion", "TruMotion"),
+        ...choice("gamma", "Gamma"),
+        ...choice("hdr_tone_mapping", "HDR tone mapping"),
+        ...choice("eye_comfort", "Eye comfort"),
+        ...choice("energy_saving", "Energy saving"),
+        ...choice("aspect_ratio", "Aspect ratio"),
+        ...choice("sleep_timer", "Sleep timer"),
+        ...choice("menu_language", "Menu language"),
+        ...choice("sound_output", "Sound output"),
+        ...choice("sound_mode", "Sound mode"),
         ...tile(find("switch", "screen"), { name: "Screen", ...half }),
         ...((e) => tile(e, { name: "Inputs", ...half, hide_state: true, tap_action: press(e) }))(
           find("button", "input_picker"),

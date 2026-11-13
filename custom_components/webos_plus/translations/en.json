@@ -64,7 +64,28 @@
           "game": "Game optimizer",
           "filmMaker": "Filmmaker",
           "expert1": "Expert (bright room)",
-          "expert2": "Expert (dark room)"
+          "expert2": "Expert (dark room)",
+          "creator": "Creator",
+          "personalized": "Personalized",
+          "photo": "Photo",
+          "hdrStandard": "HDR Standard",
+          "hdrVivid": "HDR Vivid",
+          "hdrCinema": "HDR Cinema",
+          "hdrCinemaBright": "HDR Cinema Bright",
+          "hdrEco": "HDR Eco",
+          "hdrGame": "HDR Game",
+          "hdrFilmMaker": "HDR Filmmaker",
+          "hdrCreator": "HDR Creator",
+          "hdrPersonalized": "HDR Personalized",
+          "hdrExternal": "HDR External",
+          "dolbyHdrStandard": "Dolby Vision Standard",
+          "dolbyHdrVivid": "Dolby Vision Vivid",
+          "dolbyHdrCinema": "Dolby Vision Cinema",
+          "dolbyHdrCinemaBright": "Dolby Vision Cinema Bright",
+          "dolbyHdrGame": "Dolby Vision Game",
+          "dolbyHdrCreator": "Dolby Vision Creator",
+          "dolbyHdrPersonalized": "Dolby Vision Personalized",
+          "dolbyHdrDarkAmazon": "Dolby Vision Dark"
         }
       },
       "energy_saving": {
@@ -102,6 +123,96 @@
           "tv_external_speaker": "TV + external speaker",
           "tv_speaker_headphone": "TV + headphones"
         }
+      },
+      "eye_comfort": {
+        "name": "Eye comfort",
+        "state": {
+          "off": "Off",
+          "on": "On"
+        }
+      },
+      "sleep_timer": {
+        "name": "Sleep timer",
+        "state": {
+          "off": "Off",
+          "10": "10 minutes",
+          "20": "20 minutes",
+          "30": "30 minutes",
+          "60": "1 hour",
+          "90": "1.5 hours",
+          "120": "2 hours",
+          "180": "3 hours",
+          "240": "4 hours"
+        }
+      },
+      "dynamic_contrast": {
+        "name": "Dynamic contrast",
+        "state": {
+          "off": "Off",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High"
+        }
+      },
+      "trumotion": {
+        "name": "TruMotion",
+        "state": {
+          "off": "Off",
+          "cinemaClear": "Cinema Clear",
+          "natural": "Natural",
+          "smooth": "Smooth",
+          "user": "User",
+          "clear": "Clear"
+        }
+      },
+      "gamma": {
+        "name": "Gamma",
+        "state": {
+          "low": "Low",
+          "medium": "Medium",
+          "high1": "High 1",
+          "high2": "High 2",
+          "mediumHavingLevel": "Medium (level)"
+        }
+      },
+      "hdr_tone_mapping": {
+        "name": "HDR tone mapping",
+        "state": {
+          "on": "On",
+          "off": "Off",
+          "HGIG": "HGIG"
+        }
+      },
+      "aspect_ratio": {
+        "name": "Aspect ratio",
+        "state": {
+          "16x9": "16:9",
+          "21x9": "21:9",
+          "4x3": "4:3",
+          "original": "Original",
+          "just_scan": "Just Scan",
+          "zoom": "Zoom",
+          "zoom2": "Zoom 2",
+          "cinema_zoom": "Cinema Zoom",
+          "caption_zoom": "Caption Zoom"
+        }
+      },
+      "menu_language": {
+        "name": "Menu language",
+        "state": {
+          "he-IL": "Hebrew",
+          "en-GB": "English",
+          "ar-SA": "Arabic",
+          "ru-RU": "Russian",
+          "fr-FR": "French",
+          "de-DE": "German",
+          "es-ES": "Spanish",
+          "it-IT": "Italian",
+          "pt-PT": "Portuguese",
+          "tr-TR": "Turkish",
+          "uk-UA": "Ukrainian",
+          "pl-PL": "Polish"
+        }
       }
     },
     "number": {
@@ -116,6 +227,17 @@
       },
       "color": {
         "name": "Color"
+      },
+      "sharpness": {
+        "name": "Sharpness"
+      },
+      "color_temperature": {
+        "name": "Color temperature"
+      }
+    },
+    "notify": {
+      "notification": {
+        "name": "On-screen message"
       }
     },
     "switch": {
@@ -199,6 +321,20 @@
         "sound_output": {
           "name": "Sound output",
           "description": "e.g. tv_speaker, external_arc, external_optical, bt_soundbar."
+        }
+      }
+    },
+    "send_message": {
+      "name": "Send message",
+      "description": "Shows a short message on the TV screen.",
+      "fields": {
+        "message": {
+          "name": "Message",
+          "description": "Text shown on the TV. Long text is shortened."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Optional title, shown before the message."
         }
       }
     }
