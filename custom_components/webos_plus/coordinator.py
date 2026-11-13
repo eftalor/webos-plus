@@ -26,6 +26,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .agent import AgentError, TvAgent
 from .const import (
     AGENT_POLL,
+    AGENT_POLL_LIVE,
     CONF_BROADCAST,
     CONF_MACS,
     DEFAULT_BROADCAST,
@@ -35,6 +36,7 @@ from .const import (
     LUNA_SET_SYSTEM_SETTINGS,
     POLL_FAST,
     POLL_OFF,
+    STATS_APP_IDS,
     SUBSCRIBED_SETTINGS,
     WEBOSTV_EXCEPTIONS,
     WS_PORT,
@@ -99,6 +101,7 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         # Set up later when the root agent is enabled
         self.agent: WebOsPlusAgentCoordinator | None = None
         self._was_on = False
+        self._was_live = False
 
     @property
     def is_on(self) -> bool:
@@ -164,10 +167,12 @@ class WebOsPlusCoordinator(DataUpdateCoordinator[None]):
         on = self.is_on
         if not self.client.is_connected():
             self.settings.clear()
-        if on != self._was_on:
-            LOGGER.debug("%s: power %s", self.host, "on" if on else "off")
-            self._was_on = on
+        live = on and self.client.tv_state.current_app_id in STATS_APP_IDS
+        if on != self._was_on or live != self._was_live:
+            LOGGER.debug("%s: power %s, stats app %s", self.host, on, live)
+            self._was_on, self._was_live = on, live
             if self.agent:
+                self.agent.set_live(live)
                 # read stats right away instead of waiting for the next poll
                 self.hass.async_create_task(self.agent.async_request_refresh())
         self.async_set_updated_data(None)
@@ -228,16 +233,39 @@ class WebOsPlusAgentCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.main = main
         self.agent = agent
+        # previous network byte counters: (monotonic time, rx, tx)
+        self._net_prev: tuple[float, int, int] | None = None
+
+    @callback
+    def set_live(self, live: bool) -> None:
+        """Poll faster while a stats app shows the values on the TV."""
+        self.update_interval = timedelta(seconds=AGENT_POLL_LIVE if live else AGENT_POLL)
 
     @override
     async def _async_update_data(self) -> dict[str, Any]:
         """Return the agent's stats, or {} while the TV is off."""
         if not self.main.is_on:
+            self._net_prev = None
             return {}
         try:
-            return await self.agent.async_run("stats")
+            data = await self.agent.async_run("stats")
         except AgentError as err:
             raise UpdateFailed(str(err)) from err
+        self._add_net_rates(data)
+        return data
+
+    def _add_net_rates(self, data: dict[str, Any]) -> None:
+        """Turn the agent's byte counters into average rates since the last poll."""
+        counters = data.get("net_bytes")
+        if not (isinstance(counters, list) and len(counters) == 2):
+            return
+        now, rx, tx = time.monotonic(), int(counters[0]), int(counters[1])
+        prev, self._net_prev = self._net_prev, (now, rx, tx)
+        if prev is None or now <= prev[0] or rx < prev[1] or tx < prev[2]:
+            return  # first poll, or counters reset (TV rebooted)
+        secs = now - prev[0]
+        data["net_rx_bps"] = (rx - prev[1]) / secs
+        data["net_tx_bps"] = (tx - prev[2]) / secs
 
     async def async_run(self, command: str) -> dict[str, Any]:
         """Run another agent command (free-memory, ...)."""

@@ -53,6 +53,9 @@
   },
   "entity": {
     "select": {
+      "input": {
+        "name": "Input"
+      },
       "picture_mode": {
         "name": "Picture mode",
         "state": {
@@ -124,9 +127,6 @@
       }
     },
     "button": {
-      "input_picker": {
-        "name": "Show inputs"
-      },
       "free_memory": {
         "name": "Free memory"
       }
@@ -161,6 +161,18 @@
       },
       "netflix_memory": {
         "name": "Netflix memory"
+      },
+      "network_in": {
+        "name": "Network in"
+      },
+      "network_out": {
+        "name": "Network out"
+      },
+      "storage_apps": {
+        "name": "App storage used"
+      },
+      "storage_data": {
+        "name": "Data storage used"
       },
       "last_boot": {
         "name": "Last boot"

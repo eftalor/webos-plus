@@ -1,6 +1,6 @@
 # TODO
 
-Status: **0.4.0** (2026-11-12). Phases 1-3 and the built-in dashboard are done; see
+Status: **0.5.0** (2026-11-13): network + storage sensors for the TV Stats app, Input select. Phases 1-3 and the built-in dashboard are done; see
 `CHANGELOG.md`.
 
 ## Next up
@@ -19,7 +19,7 @@ Status: **0.4.0** (2026-11-12). Phases 1-3 and the built-in dashboard are done; 
 - [ ] Re-pin the TV's SSH host key from the UI (today: the agent step reuses
       `agent_host_key`; after a factory reset or re-root the user must clear it by hand).
       Add a "forget host key" checkbox to the agent step.
-- [ ] Agent version check: compare `agent version` with the integration's expected version
+- [ ] Agent version check (now relevant: 0.5.0 needs agent v2 for network/storage): compare `agent version` with the integration's expected version
       and raise a repair issue when the TV runs an old agent.
 - [ ] Notifications (toasts) on the TV as a service (`system.notifications/createToast`).
 - [ ] More settings: eye comfort / sleep timer (write-only without root; readable through the

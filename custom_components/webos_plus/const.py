@@ -27,6 +27,9 @@ CONF_AGENT_KEY = "agent_private_key"
 CONF_AGENT_HOST_KEY = "agent_host_key"
 AGENT_PATH = "/var/lib/webos-plus/agent"
 AGENT_POLL = 30  # seconds between stats reads while the TV is on
+AGENT_POLL_LIVE = 5  # ... while a stats app is in the foreground (graphs update live)
+# Apps that show these stats on the TV itself (github.com/eftalor/webos-plus-stats)
+STATS_APP_IDS = ("com.github.eftalor.tvstats",)
 CONF_BROADCAST = "broadcast_address"
 DEFAULT_BROADCAST = "255.255.255.255"
 
@@ -39,7 +42,6 @@ FAST_WINDOW = 45  # how long to poll fast after a turn-on request
 LIVE_TV_APP_ID = "com.webos.app.livetv"
 
 LUNA_SET_SYSTEM_SETTINGS = "luna://com.webos.settingsservice/setSystemSettings"
-LUNA_SHOW_INPUT_PICKER = "luna://com.webos.surfacemanager/showInputPicker"
 GET_SYSTEM_SETTINGS = "settings/getSystemSettings"
 
 # Settings that SSAP lets us read and subscribe to (verified on webOS 6.0).

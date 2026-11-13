@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 - 2026-11-13
+
+- Agent version 2: `stats` also returns network byte counters and storage (apps `/media`,
+  data `/var`, `/tmp`). Copy the new `tv/agent.sh` to the TV.
+- New sensors (root agent): Network in, Network out (Mbit/s, average since the previous
+  poll), App storage used, Data storage used (%, attributes total/used/free MiB).
+- The agent is polled every 5 s while the TV Stats app (webos-plus-stats) is in the
+  foreground, every 30 s otherwise.
+- New **Input** select (HDMI, AV, ... with the names set on the TV) replaces the "Show
+  inputs" button, which failed on webOS 6 ("Not allowed to call method specified in the
+  uri": the TV refuses `surfacemanager/showInputPicker` from an alert). The dashboard's
+  Inputs tile is now an Input dropdown. While an app is in front, the select shows that
+  app (added as an extra option) instead of "unknown". The old button entity can be deleted.
+- The dashboard script URL is keyed on the file's content, so browsers load a changed
+  dashboard without waiting for a version bump (it is cached for 31 days).
+
 ## 0.4.0 - 2026-11-12
 
 - Built-in dashboard: Settings → Dashboards → Add dashboard → **LG webOS TV Plus** builds a

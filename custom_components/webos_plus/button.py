@@ -9,9 +9,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .agent import AgentError
-from .const import LOGGER, LUNA_SHOW_INPUT_PICKER
-from .coordinator import WebOsPlusConfigEntry, async_luna_request
-from .entity import WebOsPlusAgentEntity, WebOsPlusOnEntity, cmd
+from .const import LOGGER
+from .coordinator import WebOsPlusConfigEntry
+from .entity import WebOsPlusAgentEntity
 
 PARALLEL_UPDATES = 1
 
@@ -22,26 +22,8 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up buttons."""
-    entities: list[ButtonEntity] = [InputPickerButton(entry)]
     if entry.runtime_data.agent:
-        entities.append(FreeMemoryButton(entry))
-    async_add_entities(entities)
-
-
-class InputPickerButton(WebOsPlusOnEntity, ButtonEntity):
-    """Open the TV's input picker on screen."""
-
-    _attr_translation_key = "input_picker"
-    _attr_entity_category = EntityCategory.CONFIG
-
-    def __init__(self, entry: WebOsPlusConfigEntry) -> None:
-        """Initialize."""
-        super().__init__(entry, "input_picker")
-
-    @cmd
-    @override
-    async def async_press(self) -> None:
-        await async_luna_request(self._client, LUNA_SHOW_INPUT_PICKER, {})
+        async_add_entities([FreeMemoryButton(entry)])
 
 
 class FreeMemoryButton(WebOsPlusAgentEntity, ButtonEntity):

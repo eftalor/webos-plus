@@ -1,5 +1,6 @@
 """LG webOS TV Plus: a friendlier LG webOS TV integration."""
 
+import hashlib
 from pathlib import Path
 
 from aiowebostv import WebOsClient
@@ -11,7 +12,6 @@ from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
-from homeassistant.loader import async_get_integration
 
 from .agent import TvAgent
 from .const import CONF_AGENT, CONF_AGENT_HOST_KEY, CONF_AGENT_KEY, DOMAIN, PLATFORMS
@@ -27,11 +27,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register services and the dashboard (strategy + bundled remote card) once."""
     async_setup_services(hass)
     if hass.http is not None:
-        version = (await async_get_integration(hass, DOMAIN)).version
+        frontend = Path(__file__).parent / "frontend"
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(STATIC_URL, str(Path(__file__).parent / "frontend"), True)]
+            [StaticPathConfig(STATIC_URL, str(frontend), True)]
         )
-        add_extra_js_url(hass, f"{STATIC_URL}/webos-plus-dashboard.js?v={version}")
+        # The file is served with a long cache lifetime: key the URL on its content so
+        # browsers pick up every change, not only version bumps.
+        script = frontend / "webos-plus-dashboard.js"
+        digest = await hass.async_add_executor_job(
+            lambda: hashlib.sha256(script.read_bytes()).hexdigest()[:12]
+        )
+        add_extra_js_url(hass, f"{STATIC_URL}/{script.name}?v={digest}")
     return True
 
 

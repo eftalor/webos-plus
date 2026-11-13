@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfInformation
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfDataRate, UnitOfInformation
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util import dt as dt_util
@@ -71,6 +71,30 @@ def _top(d: dict[str, Any]) -> dict[str, Any]:
     return {"top_processes": {name: _mib(kb) for name, kb in ranked}}
 
 
+def _mbit(bps: Any) -> float | None:
+    return round(bps * 8 / 1_000_000, 3) if isinstance(bps, (int, float)) else None
+
+
+def _storage(label: str) -> Callable[[dict[str, Any]], float | None]:
+    def value(d: dict[str, Any]) -> float | None:
+        for name, total, used in d.get("storage", []):
+            if name == label and total:
+                return round(100 * used / total, 1)
+        return None
+
+    return value
+
+
+def _storage_attrs(label: str) -> Callable[[dict[str, Any]], dict[str, Any]]:
+    def attrs(d: dict[str, Any]) -> dict[str, Any]:
+        for name, total, used in d.get("storage", []):
+            if name == label:
+                return {"total_mib": _mib(total), "used_mib": _mib(used), "free_mib": _mib(total - used)}
+        return {}
+
+    return attrs
+
+
 @dataclass(frozen=True, kw_only=True)
 class AgentSensorDescription(SensorEntityDescription):
     """A value from the agent's stats."""
@@ -118,6 +142,28 @@ AGENT_SENSORS = (
     AgentSensorDescription(
         key="netflix_memory", translation_key="netflix_memory", icon="mdi:netflix",
         value_fn=lambda d: _mib(d.get("netflix_kb")), **_MEM,
+    ),
+    AgentSensorDescription(
+        key="network_in", translation_key="network_in", icon="mdi:download-network",
+        device_class=SensorDeviceClass.DATA_RATE,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
+        state_class=SensorStateClass.MEASUREMENT, suggested_display_precision=2,
+        entity_category=EntityCategory.DIAGNOSTIC, value_fn=lambda d: _mbit(d.get("net_rx_bps")),
+    ),
+    AgentSensorDescription(
+        key="network_out", translation_key="network_out", icon="mdi:upload-network",
+        device_class=SensorDeviceClass.DATA_RATE,
+        native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
+        state_class=SensorStateClass.MEASUREMENT, suggested_display_precision=2,
+        entity_category=EntityCategory.DIAGNOSTIC, value_fn=lambda d: _mbit(d.get("net_tx_bps")),
+    ),
+    AgentSensorDescription(
+        key="storage_apps", translation_key="storage_apps", icon="mdi:apps",
+        value_fn=_storage("apps"), attrs_fn=_storage_attrs("apps"), **_PCT,
+    ),
+    AgentSensorDescription(
+        key="storage_data", translation_key="storage_data", icon="mdi:database",
+        value_fn=_storage("data"), attrs_fn=_storage_attrs("data"), **_PCT,
     ),
     AgentSensorDescription(
         key="last_boot", translation_key="last_boot",

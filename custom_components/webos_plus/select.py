@@ -1,4 +1,4 @@
-"""Selects for LG webOS TV Plus: picture mode, sound mode, sound output, energy saving."""
+"""Selects for LG webOS TV Plus: input, picture mode, sound mode, sound output, energy saving."""
 
 from dataclasses import dataclass
 from typing import override
@@ -44,6 +44,7 @@ async def async_setup_entry(
     """Set up selects."""
     async_add_entities(
         [
+            InputSelect(entry),
             PictureModeSelect(entry),
             SoundOutputSelect(entry),
             *(SettingSelect(entry, d) for d in SETTING_SELECTS),
@@ -72,6 +73,56 @@ class SettingSelect(WebOsPlusOnEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         d = self.entity_description
         await self.coordinator.async_set_setting(d.category, d.setting, option)
+
+
+class InputSelect(WebOsPlusOnEntity, SelectEntity):
+    """External input (HDMI, AV, ...) with the names set on the TV.
+
+    While an app is in front, that app is added as an extra option so the state shows
+    what is on screen instead of "unknown"; choosing it brings the app to the front.
+    """
+
+    _attr_translation_key = "input"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, entry: WebOsPlusConfigEntry) -> None:
+        """Initialize."""
+        super().__init__(entry, "input")
+
+    def _foreground_app(self) -> dict | None:
+        """The app in front, unless it is one of the inputs."""
+        tv = self._client.tv_state
+        if any(inp["appId"] == tv.current_app_id for inp in tv.inputs.values()):
+            return None
+        return tv.apps.get(tv.current_app_id) if tv.current_app_id else None
+
+    @property
+    @override
+    def options(self) -> list[str]:
+        labels = [inp["label"] for inp in self._client.tv_state.inputs.values()]
+        if (app := self._foreground_app()) and app["title"] not in labels:
+            labels.append(app["title"])
+        return labels
+
+    @property
+    @override
+    def current_option(self) -> str | None:
+        tv = self._client.tv_state
+        for inp in tv.inputs.values():
+            if inp["appId"] == tv.current_app_id:
+                return inp["label"]
+        app = self._foreground_app()
+        return app["title"] if app else None
+
+    @cmd
+    @override
+    async def async_select_option(self, option: str) -> None:
+        for inp in self._client.tv_state.inputs.values():
+            if inp["label"] == option:
+                await self._client.set_input(inp["id"])
+                return
+        if (app := self._foreground_app()) and app["title"] == option:
+            await self._client.launch_app(app["id"])
 
 
 class SoundOutputSelect(WebOsPlusOnEntity, SelectEntity):

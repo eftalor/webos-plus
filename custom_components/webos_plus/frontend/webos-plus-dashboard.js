@@ -117,9 +117,7 @@ function tvView(hass, config, player, entities) {
         ...tile(find("select", "sound_output"), { name: "Sound output", ...full, ...select }),
         ...tile(find("select", "sound_mode"), { name: "Sound mode", ...full, ...select }),
         ...tile(find("switch", "screen"), { name: "Screen", ...half }),
-        ...((e) => tile(e, { name: "Inputs", ...half, hide_state: true, tap_action: press(e) }))(
-          find("button", "input_picker"),
-        ),
+        ...tile(find("select", "input"), { name: "Input", ...half, ...select }),
       ],
     },
   ];

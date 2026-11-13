@@ -4,7 +4,7 @@ A Home Assistant custom integration for LG webOS TVs, built on the same
 [`aiowebostv`](https://github.com/home-assistant-libs/aiowebostv) library as the
 built-in **LG webOS TV** integration, with a few things the built-in one doesn't do.
 
-> Status: early (0.4.0). Tested on one LG 55UP7550 (webOS 6.0, 2021, rooted with webOS Homebrew for the optional root agent) with Home Assistant 2026.11.
+> Status: early (0.5.0). Tested on one LG 55UP7550 (webOS 6.0, 2021, rooted with webOS Homebrew for the optional root agent) with Home Assistant 2026.11.
 
 ## What's different
 
@@ -31,14 +31,15 @@ is enabled (see below).
 
 - `media_player`: power, volume, apps and inputs (with the names set on the TV), app icon,
   media browser with app icons, sound mode
-- `select`: picture mode, sound mode, sound output, energy saving
+- `select`: input (HDMI, AV, ... with the names set on the TV), picture mode, sound mode,
+  sound output, energy saving
 - `number`: backlight, brightness (contrast and color are disabled by default)
 - `switch`: screen (turn the panel off while sound keeps playing)
-- `button`: show the input picker
 - `sensor`: power state, current app
 
 With the root agent: `sensor` free memory (attribute: top 5 processes), memory used,
-swap used, CPU, Netflix memory, last boot, load (disabled by default); `button` free
+swap used, CPU, Netflix memory, network in/out (Mbit/s), app and data storage used
+(attributes: total/used/free), last boot, load (disabled by default); `button` free
 memory; and the picture mode select shows the TV's real value.
 
 ## Dashboard (built in)
@@ -111,7 +112,12 @@ On a TV rooted with [webOS Homebrew](https://www.webosbrew.org/) the integration
 what SSAP won't tell it. It runs `tv/agent.sh` over SSH as the *forced command* of a key that
 Home Assistant generates, so that key can only run the agent's fixed commands
 (`version`, `stats`, `free-memory`) and never gets a shell. `stats` is polled every 30 s
-while the TV is on and takes about a second on the TV.
+while the TV is on and takes about a second on the TV. Network and storage need agent
+version 2 (copy the new `tv/agent.sh` again after updating from 0.4.x).
+
+**TV Stats app:** [webos-plus-stats](https://github.com/eftalor/webos-plus-stats) is a separate
+webOS app that shows these sensors as live graphs on the TV itself. While it is on screen the
+integration polls the agent every 5 s instead of 30 s.
 
 1. Copy `tv/agent.sh` to `/var/lib/webos-plus/agent` on the TV and `chmod 755` it.
 2. In Home Assistant: the integration's **Configure** → tick **Root agent** → Submit.
