@@ -28,7 +28,7 @@ CONF_AGENT_HOST_KEY = "agent_host_key"
 AGENT_PATH = "/var/lib/webos-plus/agent"
 AGENT_POLL = 30  # seconds between stats reads while the TV is on
 AGENT_POLL_LIVE = 5  # ... while a stats app is in the foreground (graphs update live)
-# Apps that show these stats on the TV itself (github.com/eftalor/webos-plus-stats)
+# Apps that show these stats on the TV itself (the TV Stats app, not published yet)
 STATS_APP_IDS = ("com.github.eftalor.tvstats",)
 CONF_BROADCAST = "broadcast_address"
 DEFAULT_BROADCAST = "255.255.255.255"
