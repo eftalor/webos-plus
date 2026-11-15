@@ -10,6 +10,10 @@ Status: **0.5.0** (2026-11-13): network + storage sensors for the TV Stats app, 
       but has not been pressed since 0.4.0.
 - [x] **GitHub release + tag**: first one is `v0.5.0` (2026-11-13). From now on tag every
       version (`git tag -a vX.Y.Z`, push the tag, `gh release create` with the CHANGELOG entry).
+- [ ] **README links to `github.com/eftalor/webos-plus-stats`, which doesn't exist** (the
+      user keeps that repo local for now). Either publish it when the user asks, or change the
+      README to say "coming soon" without a link. Ask the user.
+- [ ] Check the TV runs agent VERSION 2 (needed for network/storage sensors since 0.5.0).
 - [ ] **Tests** with `pytest-homeassistant-custom-component`: config flow (pairing, reauth,
       options + agent step), coordinator off/on transitions, agent JSON parsing, sensor
       value functions.
