@@ -115,7 +115,7 @@ Home Assistant generates, so that key can only run the agent's fixed commands
 while the TV is on and takes about a second on the TV. Network and storage need agent
 version 2 (copy the new `tv/agent.sh` again after updating from 0.4.x).
 
-**TV Stats app:** [webos-plus-stats](https://github.com/eftalor/webos-plus-stats) is a separate
+**TV Stats app (coming soon):** webos-plus-stats is a separate
 webOS app that shows these sensors as live graphs on the TV itself. While it is on screen the
 integration polls the agent every 5 s instead of 30 s.
 
