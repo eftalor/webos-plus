@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.5.1 - 2026-11-17
 
 - Brand images (`brand/`): the webOS logo with a red "+", in light and dark variants, so
   Settings -> Devices & services shows a logo instead of "icon not available" (needs HA's
   local brand support, 2026.11).
+- README: My Home Assistant buttons to open this repository in Marketplace/HACS and to
+  start the integration setup.
 
 ## 0.5.0 - 2026-11-13
 

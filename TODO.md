@@ -35,7 +35,8 @@ Status: **0.5.0** (2026-11-13): network + storage sensors for the TV Stats app, 
       directly. Would replace the bundled madmicio card.
 - [ ] Media player: a "now playing" image/title where the TV exposes it (YouTube, Netflix
       deep links) - probably not available on webOS 6.
-- [ ] Brand icon (home-assistant/brands) and HACS default-repository submission.
+- [x] Brand icon: shipped in the integration's `brand/` folder (0.5.1).
+- [ ] HACS default-repository submission.
 - [ ] Hebrew (and other) translations.
 
 ## Known issues / limitations
