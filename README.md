@@ -1,4 +1,4 @@
-# <picture><source media="(prefers-color-scheme: dark)" srcset="custom_components/webos_plus/brand/dark_logo@2x.png"><img alt="webOS+ logo" src="custom_components/webos_plus/brand/logo@2x.png" height="64" align="middle"></picture> LG webOS TV Plus
+# <picture><source media="(prefers-color-scheme: dark)" srcset="docs/dark_logo.png"><img alt="webOS+ logo" src="docs/logo.png" height="32"></picture> LG webOS TV Plus
 
 A Home Assistant custom integration for LG webOS TVs, built on the same
 [`aiowebostv`](https://github.com/home-assistant-libs/aiowebostv) library as the
