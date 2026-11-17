@@ -48,6 +48,8 @@ custom_components/webos_plus/
     webos-plus-dashboard.js        OUR dashboard strategy "custom:webos-plus"
     lg-remote-control.js           madmicio's card 2.1.0, UNMODIFIED (MIT)
     LICENSE-lg-remote-control.txt  its license (must ship next to it)
+  brand/             icon/logo PNGs (light + dark, 1x + 2x) served by HA's brands API from
+                     the integration folder; the webOS logo + a red "+" (HA restart to pick up)
 tv/agent.sh          root agent for the TV (BusyBox sh + awk), forced command of one SSH key
 THIRD_PARTY_NOTICES.md  credits + full MIT text for the bundled card
 hacs.json            HACS metadata (min HA 2026.11.0)

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Brand images (`brand/`): the webOS logo with a red "+", in light and dark variants, so
+  Settings -> Devices & services shows a logo instead of "icon not available" (needs HA's
+  local brand support, 2026.11).
+
 ## 0.5.0 - 2026-11-13
 
 - Agent version 2: `stats` also returns network byte counters and storage (apps `/media`,

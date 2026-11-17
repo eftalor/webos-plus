@@ -95,10 +95,16 @@ keys:
 
 ## Install
 
-1. Copy `custom_components/webos_plus` into your Home Assistant `config/custom_components/`
-   (or add this repository as a custom repository in Marketplace/HACS).
-2. Restart Home Assistant.
-3. Settings → Devices & services → Add integration → **LG webOS TV Plus**.
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eftalor&repository=webos-plus&category=integration)
+
+1. Click the button above, or in Marketplace/HACS add the custom repository
+   `eftalor/webos-plus` (type Integration). You can also copy `custom_components/webos_plus`
+   into your Home Assistant `config/custom_components/` by hand.
+2. Download "LG webOS TV Plus" and restart Home Assistant.
+3. Settings → Devices & services → Add integration → **LG webOS TV Plus**, or click:
+
+   [![Open your Home Assistant instance and start setting up LG webOS TV Plus.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=webos_plus)
+
 4. Enter the TV's IP address, press Submit, and accept the prompt on the TV.
 
 On the TV, turn on **Turn on via Wi-Fi** (sometimes "Mobile TV On") so Wake-on-LAN works,
@@ -138,6 +144,9 @@ screen, Home, inputs, Live TV, AirPlay or the screensaver.
   by Maurizio "madmicio" and contributors, MIT license. Version 2.1.0 is included unmodified
   as `custom_components/webos_plus/frontend/lg-remote-control.js`, together with its license
   (`frontend/LICENSE-lg-remote-control.txt`). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- **Logo:** based on the webOS logo from the Home Assistant brands repository
+  (`brands/webostv`), with a "+" added. webOS and LG are trademarks of LG Electronics; this
+  project is not affiliated with or endorsed by LG.
 - **TV library:** [aiowebostv](https://github.com/home-assistant-libs/aiowebostv), as used by
   Home Assistant's own LG webOS TV integration.
 
